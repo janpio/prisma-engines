@@ -90,16 +90,6 @@ impl<'ast> Names<'ast> {
 
         names
     }
-
-    pub(crate) fn get_enum(&self, name: &str, schema: &'ast ast::SchemaAst) -> Option<&'ast ast::Enum> {
-        self.tops.get(name).and_then(|top_id| schema[*top_id].as_enum())
-    }
-
-    pub(crate) fn iter_enums(&self, schema: &'ast SchemaAst) -> impl Iterator<Item = (TopId, &'ast ast::Enum)> + '_ {
-        self.tops
-            .values()
-            .filter_map(move |topid| schema[*topid].as_enum().map(|enm| (*topid, enm)))
-    }
 }
 
 fn insert_name<'ast>(

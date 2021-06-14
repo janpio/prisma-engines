@@ -1,4 +1,4 @@
-use super::Names;
+use super::db::ParserDatabase;
 use crate::{
     ast, configuration,
     diagnostics::{DatamodelError, Diagnostics},
@@ -30,19 +30,14 @@ impl<'a> Validator<'a> {
         Self { source }
     }
 
-    pub(crate) fn validate(
-        &self,
-        ast_schema: &ast::SchemaAst,
-        names: &Names<'_>,
-        schema: &mut dml::Datamodel,
-    ) -> Result<(), Diagnostics> {
+    pub(crate) fn validate(&self, db: &ParserDatabase<'_>, schema: &mut dml::Datamodel) -> Result<(), Diagnostics> {
         let mut all_errors = Diagnostics::new();
 
-        if let Err(ref mut errs) = self.validate_names(ast_schema, names) {
+        if let Err(ref mut errs) = self.validate_names(db) {
             all_errors.append(errs);
         }
 
-        if let Err(ref mut errs) = self.validate_names_for_indexes(ast_schema, schema) {
+        if let Err(ref mut errs) = self.validate_names_for_indexes(db.ast(), schema) {
             all_errors.append(errs);
         }
 
@@ -53,7 +48,8 @@ impl<'a> Validator<'a> {
 
             if let Some(sf) = model.scalar_fields().find(|f| f.is_id && !f.is_required()) {
                 if !model.is_ignored {
-                    let span = ast_schema
+                    let span = db
+                        .ast()
                         .models()
                         .find(|ast_model| ast_model.name.name == model.name)
                         .unwrap()
@@ -71,7 +67,7 @@ impl<'a> Validator<'a> {
                 }
             }
 
-            let ast_model = ast_schema.find_model(&model.name).expect(STATE_ERROR);
+            let ast_model = db.ast().find_model(&model.name).expect(STATE_ERROR);
 
             if let Err(err) = self.validate_model_compound_ids(ast_model, model) {
                 errors_for_model.push_error(err);
@@ -85,7 +81,7 @@ impl<'a> Validator<'a> {
                 errors_for_model.push_error(err);
             }
 
-            if let Err(err) = self.validate_relations_not_ambiguous(ast_schema, model) {
+            if let Err(err) = self.validate_relations_not_ambiguous(db.ast(), model) {
                 errors_for_model.push_error(err);
             }
 
@@ -124,13 +120,13 @@ impl<'a> Validator<'a> {
             all_errors.append(&mut errors_for_model);
         }
 
-        validate_name_collisions_with_map(schema, ast_schema, &mut all_errors);
+        validate_name_collisions_with_map(schema, db.ast(), &mut all_errors);
 
         // Enum level validations.
         for declared_enum in schema.enums() {
             let mut errors_for_enum = Diagnostics::new();
             if let Err(err) = self.validate_enum_name(
-                names.get_enum(&declared_enum.name, ast_schema).expect(STATE_ERROR),
+                db.get_enum(&declared_enum.name, db.ast()).expect(STATE_ERROR),
                 declared_enum,
             ) {
                 errors_for_enum.push_error(err);
@@ -177,10 +173,10 @@ impl<'a> Validator<'a> {
         }
     }
 
-    fn validate_names(&self, ast_schema: &ast::SchemaAst, names: &Names<'_>) -> Result<(), Diagnostics> {
+    fn validate_names(&self, db: &ParserDatabase<'_>) -> Result<(), Diagnostics> {
         let mut errors = Diagnostics::new();
 
-        for model in ast_schema.models() {
+        for model in db.ast().models() {
             errors.push_opt_error(model.name.validate("Model").err());
             errors.append(&mut model.validate_attributes());
 
@@ -190,7 +186,7 @@ impl<'a> Validator<'a> {
             }
         }
 
-        for (_, enum_decl) in names.iter_enums(ast_schema) {
+        for (_, enum_decl) in db.iter_enums() {
             errors.push_opt_error(enum_decl.name.validate("Enum").err());
             errors.append(&mut enum_decl.validate_attributes());
 
