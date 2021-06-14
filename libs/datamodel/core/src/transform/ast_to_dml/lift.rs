@@ -16,7 +16,7 @@ use regex::Regex;
 
 /// Helper for lifting a datamodel.
 ///
-/// When lifting, the AST is converted to the real datamodel, and additional
+/// When lifting, the AST is converted to a `dml::Datamodel`, and additional
 /// semantics are attached.
 pub struct LiftAstToDml<'a> {
     attributes: AllAttributes,
@@ -131,11 +131,8 @@ impl<'a> LiftAstToDml<'a> {
             errors.append(&mut err);
         }
 
-        if errors.has_errors() {
-            Err(errors)
-        } else {
-            Ok(en)
-        }
+        errors.to_result()?;
+        Ok(en)
     }
 
     /// Internal: Validates an enum value AST node.

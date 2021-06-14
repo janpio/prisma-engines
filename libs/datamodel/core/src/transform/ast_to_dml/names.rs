@@ -4,13 +4,13 @@ use crate::{
 };
 use dml::scalars::ScalarType;
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     str::FromStr,
 };
 
 /// Resolved names for use in the validation process.
 ///
-/// `Names::new()` is also responsible for validating that there are no name
+/// `Names::new()` is responsible for validating that there are no name
 /// collisions in the following namespaces:
 ///
 /// - Model, enum and type alias names
@@ -25,7 +25,7 @@ pub(crate) struct Names<'ast> {
     generators: HashMap<&'ast str, TopId>,
     /// Datasources have their own namespace.
     datasources: HashMap<&'ast str, TopId>,
-    model_fields: BTreeMap<(TopId, &'ast str), FieldId>,
+    model_fields: HashMap<(TopId, &'ast str), FieldId>,
 }
 
 impl<'ast> Names<'ast> {
