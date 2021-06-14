@@ -40,7 +40,7 @@ impl<'a, 'b> ValidationPipeline<'a> {
         // Phase 0 is parsing.
         // Phase 1 is source block loading.
 
-        // Phase 2: Name resolution.
+        // Phase 2: Name resolution and type checking.
         let names = Names::new(ast_schema, &mut diagnostics);
 
         // Early return so that the validator does not have to deal with invalid schemas

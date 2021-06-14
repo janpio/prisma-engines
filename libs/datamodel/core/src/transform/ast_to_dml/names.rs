@@ -20,7 +20,7 @@ use std::{
 /// - Enum variants for each enum
 pub(crate) struct Names<'ast> {
     /// Models, enums and type aliases
-    tops: HashMap<&'ast str, TopId>,
+    pub(super) tops: HashMap<&'ast str, TopId>,
     /// Generators have their own namespace.
     generators: HashMap<&'ast str, TopId>,
     /// Datasources have their own namespace.
