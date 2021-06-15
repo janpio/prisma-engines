@@ -3,14 +3,16 @@
 //! The top-level library crate for the migration engine.
 
 mod api;
+mod rpc;
 
 pub mod commands;
 pub mod qe_setup;
 
 mod core_error;
 
-pub use api::{rpc_api, GenericApi};
+pub use api::GenericApi;
 pub use core_error::{CoreError, CoreResult};
+pub use rpc::rpc_api;
 
 use datamodel::{
     common::provider_names::{MSSQL_SOURCE_NAME, MYSQL_SOURCE_NAME, POSTGRES_SOURCE_NAME, SQLITE_SOURCE_NAME},
